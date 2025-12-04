@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+  flash-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flashdeals:dev
+    labels:
+      co.elastic.logs/enabled: "true"
+      co.elastic.logs/json.keys_under_root: "true"
+      co.elastic.logs/json.overwrite_keys: "true"
+      co.elastic.logs/json.add_error_key: "true"
+      co.elastic.logs/json.message_key: "message"
+    container_name: flash-api
+    environment:
+      PORT: "8080"
+      SERVICE_NAME: "flash-api"
+      ENV: "dev"
+      DB_PATH: "//data/flashdeals.db"
+      KAFKA_BROKERS: "kafka:9092"
+      KAFKA_TOPIC_PREFIX: "flashdeals"
+    volumes:
+      - flashdeals_data:/data
+    ports:
+      - "8080:8080"
+    depends_on:
+      - logstash
+    # Add a simple healthcheck
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 2s
+      retries: 5
+    networks: [stack]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false   # dev only
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks: [stack]
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false  # dev only
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks: [stack]
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.3
+    container_name: logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    environment:
+      - xpack.security.enabled=false
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+    networks: [stack]
+
+  filebeat:
+    build:
+      context: .
+      dockerfile: ./filebeat/Dockerfile
+    container_name: filebeat
+    user: root
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - logstash
+    networks: [stack]
+
+
+volumes:
+  flashdeals_data: {}
+  esdata:
+
+networks:
+  stack:
+    driver: bridge
