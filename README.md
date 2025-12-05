@@ -153,3 +153,24 @@ for i in {1..200}; do curl -s http://localhost:8080/deals > /dev/null; done
 | `/filebeat` | Filebeat configs |
 | `/docker-compose.yml` | App + ELK orchestration |
 
+
+## 📊 Observability & Monitoring
+
+![Kibana Dashboard](images/dashboard.png)
+*Real-time dashboard visualizing the Golden Signals: Traffic, Latency, and Errors.*
+
+This project uses the **ELK Stack (Elasticsearch, Logstash, Kibana)** for production-grade monitoring.
+
+*   **Structured Logging:** The Go app uses `zerolog` to print JSON to `stdout`.
+*   **Filebeat Autodiscover:** Configured to detect the specific Docker container labels (`co.elastic.logs/enabled: "true"`).
+*   **Logstash:** Parses the JSON and enriches fields (Latency, Service Name, HTTP Status).
+*   **Kibana:** Visualizes the data.
+
+### Access Kibana
+*   **URL:** [http://localhost:5601](http://localhost:5601)
+*   **Index Pattern:** `flashdeals-*`
+
+**Key Metrics Tracked:**
+*   **Traffic:** Requests Per Minute (RPM) broken down by route.
+*   **Latency:** Heatmaps and 95th Percentile response times.
+*   **Errors:** Live feed of HTTP 500s and application panics.
