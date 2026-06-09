@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        CGO: "1"
     image: flashdeals:dev
     labels:
       co.elastic.logs/enabled: "true"

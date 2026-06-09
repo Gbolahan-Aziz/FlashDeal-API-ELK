@@ -1,3 +1,5 @@
+//go:build cgo
+
 package store
 
 import (
@@ -6,15 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	"github.com/google/uuid"	
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 
 	"FlashDeal-API-ELK/internal/domain"
-)
-
-var (
-	ErrNotFound     = errors.New("not found")
-	ErrInsufficient = errors.New("insufficient stock")
 )
 
 type SQLStore struct {
