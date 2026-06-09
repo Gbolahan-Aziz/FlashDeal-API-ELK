@@ -17,20 +17,18 @@ services:
       PORT: "8080"
       SERVICE_NAME: "flash-api"
       ENV: "dev"
-      DB_PATH: "//data/flashdeals.db"
-      KAFKA_BROKERS: "kafka:9092"
-      KAFKA_TOPIC_PREFIX: "flashdeals"
+      DB_PATH: "/data/flashdeals.db"
     volumes:
       - flashdeals_data:/data
     ports:
       - "8080:8080"
     depends_on:
-      - logstash
-    # Add a simple healthcheck
+      logstash:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
       interval: 10s
-      timeout: 2s
+      timeout: 5s
       retries: 5
     networks: [stack]
 
@@ -39,8 +37,8 @@ services:
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false   # dev only
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ulimits:
       memlock:
         soft: -1
@@ -49,6 +47,12 @@ services:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     networks: [stack]
 
   kibana:
@@ -56,11 +60,18 @@ services:
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - XPACK_SECURITY_ENABLED=false  # dev only
+      - XPACK_SECURITY_ENABLED=false
     ports:
       - "5601:5601"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     networks: [stack]
 
   logstash:
@@ -70,11 +81,18 @@ services:
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
     environment:
       - xpack.security.enabled=false
-      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
     ports:
       - "5044:5044"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9600 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     networks: [stack]
 
   filebeat:
@@ -89,13 +107,13 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
-      - logstash
+      logstash:
+        condition: service_healthy
     networks: [stack]
-
 
 volumes:
   flashdeals_data: {}
-  esdata:
+  esdata: {}
 
 networks:
   stack:
