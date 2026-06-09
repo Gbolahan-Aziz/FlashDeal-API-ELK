@@ -432,19 +432,19 @@ const uiHTML = `<!DOCTYPE html>
       el.innerHTML = '<div class="empty-state">No deals yet. Launch one above.</div>';
       return;
     }
-    el.innerHTML = deals.map(d => ` + "`" + `
-      <div class="deal-card">
-        <div>
-          <div class="deal-id">${d.id ? d.id.substring(0,8) : ''}...</div>
-          <div class="deal-name">${esc(d.title)}</div>
-          <div class="deal-stock">${d.stock} units remaining</div>
-        </div>
-        <div style="text-align:right">
-          <div class="deal-price">$${Number(d.price).toFixed(2)}</div>
-          <div class="deal-badge">ACTIVE</div>
-        </div>
-      </div>
-    ` + "`").join('');
+    el.innerHTML = deals.map(function(d) {
+      return '<div class="deal-card">' +
+        '<div>' +
+          '<div class="deal-id">' + (d.id ? d.id.substring(0,8) : '') + '...</div>' +
+          '<div class="deal-name">' + esc(d.title) + '</div>' +
+          '<div class="deal-stock">' + d.stock + ' units remaining</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div class="deal-price">$' + Number(d.price).toFixed(2) + '</div>' +
+          '<div class="deal-badge">ACTIVE</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
   }
 
   function renderDealSelect() {
