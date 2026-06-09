@@ -14,6 +14,9 @@ func Router(d Deps) http.Handler {
 	// Normalize paths like `/deals/` -> `/deals`
 	r.Use(chimw.RedirectSlashes)
 
+	// UI
+	r.Get("/", serveUI)
+
 	// Health
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

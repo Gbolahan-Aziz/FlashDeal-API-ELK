@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: flashdeal-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: SERVICE_NAME
+        value: flash-api
+      - key: ENV
+        value: production
+      - key: DB_PATH
+        value: ""
+    healthCheckPath: /healthz
