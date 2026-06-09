@@ -23,7 +23,7 @@ func (m *Mem) CreateDeal(in domain.NewDeal) (*domain.Deal, error) {
 	defer m.mu.Unlock()
 	d := &domain.Deal{
 		ID: uuid.New().String(), Title: in.Title, Price: in.Price, Stock: in.Stock,
-		Active: in.Active, CreatedAt: time.Now(),
+		Active: true, CreatedAt: time.Now(),
 	}
 	m.deals[d.ID] = d
 	return d, nil

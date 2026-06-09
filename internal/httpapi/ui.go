@@ -461,7 +461,7 @@ const uiHTML = `<!DOCTYPE html>
     const res = await fetch('/deals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, price, stock })
+      body: JSON.stringify({ title, price, stock, active: true })
     });
     if (res.ok) {
       document.getElementById('deal-title').value = '';
